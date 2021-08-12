@@ -240,9 +240,6 @@ class TokensViewController : UICollectionViewController, UICollectionViewDelegat
                                     self.collectionView.deleteItems(at: array)
                                 }
                                 
-                                // reload the search button
-                                self.showSearchButton()
-                                
                                 // also reload the tokens array
                                 self.tokensArray = self.store.getAllTokens()
                             }
@@ -398,9 +395,45 @@ class TokensViewController : UICollectionViewController, UICollectionViewDelegat
 }
 
 extension TokensViewController: TokenCellDelegate {
+    
+    func edit(token: Token, sender: UIView?) {
+         let evc: EditViewController = self.next("edit", sender: sender, dir: [.left, .right])
+         evc.token = token
+     }
+    
     func share(token: Token, sender: UIView?) {
         let svc: ShareViewController = self.next("share", sender: sender, dir: [.left, .right])
         svc.token = token
+    }
+    
+    func delete(token: Token, sender: UIView?) {
+        let actionSheetController: UIAlertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+
+        let removeAction: UIAlertAction = UIAlertAction(title: "Remove token", style: .destructive) { action -> Void in
+
+            TokenStore().erase(token: token)
+            var array = [IndexPath]()
+//            array.append(currPath)
+
+            if self.searchingTokens {
+//                self.searchedTokensArray.remove(at: currPath.row)
+                self.collectionView.deleteItems(at: array)
+
+            } else {
+                self.collectionView.deleteItems(at: array)
+            }
+
+            // also reload the tokens array
+            self.tokensArray = self.store.getAllTokens()
+        }
+        
+        let cancelAction: UIAlertAction = UIAlertAction(title: "Cancel", style: .cancel)
+
+        actionSheetController.addAction(removeAction)
+        actionSheetController.addAction(cancelAction)
+
+
+        self.present(actionSheetController, animated: true)
     }
 }
 

@@ -22,7 +22,9 @@ import TinyConstraints
 import UIKit
 
 protocol TokenCellDelegate: AnyObject {
+    func edit(token: Token, sender: UIView?)
     func share(token: Token, sender: UIView?)
+    func delete(token: Token, sender: UIView?)
 }
 
 class TokenCell: UICollectionViewCell {
@@ -76,11 +78,37 @@ class TokenCell: UICollectionViewCell {
         view.textColor = UIColor.app.secondaryText
         return view
     }()
-
+    
+    private(set) lazy var editButton: UIButton = {
+        let view = UIButton(type: .system)
+        view.tintColor = UIColor.app.accent
+        if #available(iOS 13.0, *) {
+            view.setImage(UIImage(systemName: "pencil"), for: .normal)
+        } else {
+            view.setImage(UIImage(named: "EditIcon"), for: .normal)
+        }
+        return view
+    }()
+    
     private(set) lazy var shareButton: UIButton = {
         let view = UIButton(type: .system)
         view.tintColor = UIColor.app.accent
-        view.setImage(UIImage(named: "ShareIcon"), for: .normal)
+        if #available(iOS 13.0, *) {
+            view.setImage(UIImage(systemName: "square.and.arrow.up"), for: .normal)
+        } else {
+            view.setImage(UIImage(named: "ShareIcon"), for: .normal)
+        }
+        return view
+    }()
+    
+    private(set) lazy var deleteButton: UIButton = {
+        let view = UIButton(type: .system)
+        view.tintColor = UIColor.app.accent
+        if #available(iOS 13.0, *) {
+            view.setImage(UIImage(systemName: "trash"), for: .normal)
+        } else {
+            view.setImage(UIImage(named: "DeleteIcon"), for: .normal)
+        }
         return view
     }()
 
@@ -132,6 +160,8 @@ class TokenCell: UICollectionViewCell {
         contentView.addSubview(innerProgressView)
         contentView.addSubview(lockImagView)
         contentView.addSubview(stackView)
+        contentView.addSubview(deleteButton)
+        contentView.addSubview(editButton)
         contentView.addSubview(shareButton)
         contentView.addSubview(codeLabel)
 
@@ -156,17 +186,33 @@ class TokenCell: UICollectionViewCell {
         stackView.rtlLeftToRight(of: imageView, offset: 12)
         stackView.rtlRightToLeft(of: shareButton, offset: -12)
         stackView.centerYToSuperview()
-
-        shareButton.rtlRightToSuperview(offset: -12)
+        
+        editButton.rtlRightToSuperview(offset: -84)
+        editButton.centerYToSuperview()
+        editButton.size(CGSize(width: 24, height: 24))
+        
+        shareButton.rtlRightToSuperview(offset: -48)
         shareButton.centerYToSuperview()
         shareButton.size(CGSize(width: 24, height: 24))
+        
+        deleteButton.rtlRightToSuperview(offset: -12)
+        deleteButton.centerYToSuperview()
+        deleteButton.size(CGSize(width: 24, height: 24))
 
         codeLabel.topToSuperview()
         codeLabel.rtlLeftToRight(of: imageView, offset: 12)
         codeLabel.rtlRightToSuperview(offset: -12)
         codeLabel.bottomToSuperview()
 
+        editButton.addTarget(self, action: #selector(edit), for: .touchUpInside)
         shareButton.addTarget(self, action: #selector(share), for: .touchUpInside)
+        deleteButton.addTarget(self, action: #selector(delete as () -> Void), for: .touchUpInside)
+    }
+    
+    @objc private func edit() {
+        if let token = token {
+            delegate?.edit(token: token, sender: editButton)
+        }
     }
 
     @objc private func share() {
@@ -174,7 +220,13 @@ class TokenCell: UICollectionViewCell {
             delegate?.share(token: token, sender: shareButton)
         }
     }
-
+    
+    @objc private func delete() {
+        if let token = token {
+            delegate?.delete(token: token, sender: deleteButton)
+        }
+    }
+    
     override func prepareForReuse() {
         super.prepareForReuse()
         imageView.image = defaultIcon
@@ -209,6 +261,8 @@ class TokenCell: UICollectionViewCell {
                 self.outerProgressView.alpha = showToken ? 1 : 0
                 self.imageView.alpha = showToken ? 0.4 : 1
                 self.codeLabel.alpha = showToken ? 1 : 0
+                self.deleteButton.alpha = showToken ? 0 : 1
+                self.editButton.alpha = showToken ? 0 : 1
                 self.shareButton.alpha = showToken ? 0 : 1
                 self.lockImagView.alpha = showToken ? 0 : 1
             },
